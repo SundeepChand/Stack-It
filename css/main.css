@@ -9,16 +9,41 @@ canvas {
   display: block;
 }
 
-h1 {
+.game-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100vw;
+  height: 100vh;
   position: absolute;
-  top: 2em;
-  left: 2em;
+  left: 0px;
+  top: 0px;
   font-family: "Montserrat", sans-serif;
-  font-size: 7em;
+  background-color: #0000007e;
+  color: white;
+  text-align: center;
+}
+
+.game-screen > h1 {
+  font-size: 5rem;
   text-transform: uppercase;
   width: auto;
+  margin: auto;
   line-height: 0.8em;
   border: 5px solid white;
-  color: white;
-  padding: 0.2em;
+  padding: 0.2rem;
+  margin: 1rem;
+}
+
+.game-screen > p {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+#game-over-menu {
+  display: none;
 }

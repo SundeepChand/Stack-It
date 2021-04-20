@@ -8,6 +8,37 @@ let stack = [],
   overhangs = [];
 const boxHeight = 0.5;
 
+const resetScene = () => {
+  stack = [];
+  overhangs = [];
+  if (world) {
+    // Remove every object from world
+    while (world.bodies.length > 0) {
+      world.remove(world.bodies[0]);
+    }
+  }
+
+  if (scene) {
+    // Remove every Mesh from the scene
+    while (scene.children.find((c) => c.type == "Mesh")) {
+      const mesh = scene.children.find((c) => c.type == "Mesh");
+      scene.remove(mesh);
+    }
+
+    // Foundation
+    addLayer(0, 0, originalBoxSize, originalBoxSize);
+
+    // First layer
+    addLayer(-10, 0, originalBoxSize, originalBoxSize, "x");
+  }
+
+  if (camera) {
+    // Reset camera positions
+    camera.position.set(4, 4, 4);
+    camera.lookAt(0, 0, 0);
+  }
+};
+
 const init = () => {
   // Set up cannon.js
   world = new CANNON.World();
@@ -49,7 +80,10 @@ const init = () => {
 
   window.addEventListener("resize", () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
+    let newAspect = window.innerWidth / window.innerHeight;
+    let newHeight = width / newAspect;
+    camera.top = newHeight / 2;
+    camera.bottom = -newHeight / 2;
 
     camera.updateProjectionMatrix();
   });
@@ -166,10 +200,22 @@ const updatePhysics = () => {
 };
 
 let gameStarted = false;
-
-window.addEventListener("load", init);
-window.addEventListener("click", () => {
-  if (!gameStarted) {
+let startMenu, gameOverMenu;
+window.addEventListener("load", () => {
+  init();
+  startMenu = document.getElementById("game-menu");
+  gameOverMenu = document.getElementById("game-over-menu");
+  gameOverMenu.style.display = "none";
+});
+window.addEventListener("click", (event) => {
+  if (event.target.id === "game-over-menu") {
+    renderer.setAnimationLoop(null);
+    resetScene();
+    gameStarted = false;
+    gameOverMenu.style.display = "none";
+    startMenu.style.display = "flex";
+  } else if (!gameStarted) {
+    startMenu.style.display = "none";
     renderer.setAnimationLoop(animation);
     gameStarted = true;
   } else {
@@ -210,6 +256,8 @@ window.addEventListener("click", () => {
       addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
     } else {
       console.log("Game over");
+      gameOverMenu.style.display = "flex";
+      gameStarted = false;
     }
   }
 });
