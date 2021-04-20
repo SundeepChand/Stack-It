@@ -9,8 +9,8 @@ const boxHeight = 0.5;
 const init = () => {
   scene = new THREE.Scene();
 
-  addLayer(0, 0, originalBoxSize, originalBoxSize);
-  addLayer(startPos, 0, originalBoxSize, originalBoxSize);
+  addLayer(0, 0, originalBoxSize, originalBoxSize, "z");
+  addLayer(startPos, 0, originalBoxSize, originalBoxSize, "x");
 
   // Set up lights
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
@@ -47,7 +47,6 @@ const init = () => {
 
   renderer.render(scene, camera);
 };
-window.addEventListener("load", init);
 
 const addLayer = (x, z, width, depth, direction) => {
   const y = boxHeight * stack.length;
@@ -76,35 +75,58 @@ const generateBox = (x, y, z, width, depth) => {
   };
 };
 
-let gameStarted = false;
-
-window.addEventListener("keydown", () => {
-  if (!gameStarted) {
-    renderer.setAnimationLoop(animation);
-    gameStarted = true;
-  } else {
-    const topLayer = stack[stack.length - 1];
-    const direction = topLayer.direction;
-
-    const nextX = direction === "x" ? 0 : startPos;
-    const nextZ = direction === "z" ? 0 : startPos;
-
-    const newWidth = originalBoxSize;
-    const newDepth = originalBoxSize;
-    const nextDirection = direction === "x" ? "z" : "x";
-
-    addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
-  }
-});
-
 const animation = () => {
   const speed = 0.15;
   const topLayer = stack[stack.length - 1];
+
   topLayer.threejs.position[topLayer.direction] += speed;
 
   if (camera.position.y < boxHeight * (stack.length - 2) + 4) {
     camera.position.y += speed;
   }
-
   renderer.render(scene, camera);
 };
+
+let gameStarted = false;
+
+window.addEventListener("load", init);
+window.addEventListener("click", () => {
+  if (!gameStarted) {
+    renderer.setAnimationLoop(animation);
+    gameStarted = true;
+  } else {
+    const topLayer = stack[stack.length - 1];
+    const previousLayer = stack[stack.length - 2];
+
+    const direction = topLayer.direction;
+
+    const delta =
+      topLayer.threejs.position[direction] -
+      previousLayer.threejs.position[direction];
+
+    const overHangSize = Math.abs(delta);
+
+    const size = direction === "x" ? topLayer.width : topLayer.depth;
+
+    const overlap = size - overHangSize;
+
+    if (overlap > 0) {
+      // Cut the block into 2 parts
+      topLayer.threejs.scale[direction] = overlap / size;
+      topLayer.threejs.position[direction] =
+        previousLayer.threejs.position[direction] + delta / 2;
+
+      const nextX = direction === "x" ? topLayer.threejs.position.x : startPos;
+      const nextZ = direction === "z" ? topLayer.threejs.position.z : startPos;
+
+      console.log(topLayer.threejs);
+      const newWidth = direction === "x" ? overlap : topLayer.width;
+      const newDepth = direction === "z" ? overlap : topLayer.depth;
+      const nextDirection = direction === "x" ? "z" : "x";
+
+      addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
+    } else {
+      console.log("Game over");
+    }
+  }
+});
