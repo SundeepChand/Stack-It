@@ -3,7 +3,8 @@ const originalBoxSize = 3;
 
 const startPos = -5;
 
-let stack = [];
+let stack = [],
+  overhangs = [];
 const boxHeight = 0.5;
 
 const init = () => {
@@ -55,6 +56,12 @@ const addLayer = (x, z, width, depth, direction) => {
   layer.direction = direction;
 
   stack.push(layer);
+};
+
+const addOverHang = (x, z, width, depth) => {
+  const y = boxHeight * (stack.length - 1);
+  const overhang = generateBox(x, y, z, width, depth);
+  overhangs.push(overhang);
 };
 
 const generateBox = (x, y, z, width, depth) => {
@@ -116,10 +123,21 @@ window.addEventListener("click", () => {
       topLayer.threejs.position[direction] =
         previousLayer.threejs.position[direction] + delta / 2;
 
+      // add the overhang
+      const newOverHangPos =
+        topLayer.threejs.position[direction] +
+        (Math.sign(delta) * (overlap + overHangSize)) / 2;
+      const overHangX =
+        direction === "x" ? newOverHangPos : topLayer.threejs.position["x"];
+      const overHangZ =
+        direction === "z" ? newOverHangPos : topLayer.threejs.position["z"];
+      const overHangWidth = direction === "x" ? overHangSize : topLayer.width;
+      const overHangDepth = direction === "z" ? overHangSize : topLayer.depth;
+      addOverHang(overHangX, overHangZ, overHangWidth, overHangDepth);
+
       const nextX = direction === "x" ? topLayer.threejs.position.x : startPos;
       const nextZ = direction === "z" ? topLayer.threejs.position.z : startPos;
 
-      console.log(topLayer.threejs);
       const newWidth = direction === "x" ? overlap : topLayer.width;
       const newDepth = direction === "z" ? overlap : topLayer.depth;
       const nextDirection = direction === "x" ? "z" : "x";
